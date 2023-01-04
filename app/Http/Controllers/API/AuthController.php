@@ -10,10 +10,12 @@ use Illuminate\Support\Facades\Hash;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Resources\Auth\UserResource;
 use App\Http\Requests\Auth\RegisterRequest;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    public function register(RegisterRequest $request) {
+    public function register(RegisterRequest $request)
+    {
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -21,25 +23,6 @@ class AuthController extends Controller
         ]);
 
         $token = $user->createToken('app_token')->plainTextToken;
-
-        return (new UserResource($user))
-            ->additional([
-                'token' => $token
-            ]);
-    }
-
-    public function login(LoginRequest $request)
-    {
-        $user = User::where('email', $request->email)->first();
-
-        // Check password
-        if(!$user || !Hash::check($request->password, $user->password)) {
-            return response([
-                'message' => 'Invalid credentials.'
-            ], 401);
-        }
-
-        $token = $user->createToken('myapptoken')->plainTextToken;
 
         $response = [
             'user' => $user,
@@ -49,11 +32,35 @@ class AuthController extends Controller
         return response($response, 201);
     }
 
-    public function logout(Request $request) {
+    public function login(LoginRequest $request)
+    {
+        $user = User::where('email', $request->email)->first();
+
+        // Check password
+        if(!$user || !Hash::check($request->password, $user->password)) {
+            throw ValidationException::withMessages([
+                'email' => ['The provided credentials are incorrect.'],
+            ]);
+        }
+
+        $token = $user->createToken('app_token')->plainTextToken;
+
+        $response = [
+            'user' => $user,
+            'token' => $token
+        ];
+
+        return response($response, 201);
+    }
+
+    public function logout(Request $request)
+    {
         auth()->user()->tokens()->delete();
 
-        return [
+        $response = [
             'message' => 'Logged out'
         ];
+
+        return response($response, 201);
     }
 }
