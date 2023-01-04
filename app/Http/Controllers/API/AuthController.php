@@ -37,7 +37,7 @@ class AuthController extends Controller
         $user = User::where('email', $request->email)->first();
 
         // Check password
-        if(!$user || !Hash::check($request->password, $user->password)) {
+        if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
@@ -50,7 +50,7 @@ class AuthController extends Controller
             'token' => $token
         ];
 
-        return response($response, 201);
+        return response($response, 200);
     }
 
     public function logout(Request $request)
@@ -61,6 +61,6 @@ class AuthController extends Controller
             'message' => 'Logged out'
         ];
 
-        return response($response, 201);
+        return response($response, 200);
     }
 }
